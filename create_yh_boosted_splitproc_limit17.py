@@ -461,12 +461,12 @@ if __name__ == "__main__":
                     fs=final_state,
                 )
                 output_sig_root = (
-                    "output_Signal_{mass}_{cat}_M125_{year}_13TeV_ggyh{fs}.root"
+                    "output_Signal{mass}{cat}_M125_{year}_13TeV_amcatnloFXFX_pythia8_ggyh{fs}.root"
                 ).format(
-                    mass=mass,
-                    cat=cat,
-                    year=YEAR,
-                    fs=final_state,
+                    mass=mass,      # e.g. MX3000_MY2800
+                    cat=cat,        # e.g. cat12lowpurity
+                    year=YEAR,      # 2017
+                    fs=final_state, # wwgg, VBF, VH, TTH, GGH
                 )
 
                 run_Tree2WS_sig(

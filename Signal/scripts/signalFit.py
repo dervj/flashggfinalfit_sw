@@ -165,7 +165,16 @@ for mp in opt.massPoints.split(","):
 if( datasetRVForFit[MHNominal].numEntries() < opt.replacementThreshold  )|( datasetRVForFit[MHNominal].sumEntries() < 0. ):
   nominal_numEntries = datasetRVForFit[MHNominal].numEntries()
   print("debug opt.cat is : ",opt.cat)
-  procReplacementFit, catReplacementFit = rMap['procRVMap'][opt.cat], rMap['catRVMap'][opt.cat]
+  # procReplacementFit, catReplacementFit = rMap['procRVMap'][opt.cat], rMap['catRVMap'][opt.cat]
+  try:
+    procReplacementFit = rMap['procRVMap'][opt.cat]
+    catReplacementFit  = rMap['catRVMap'][opt.cat]
+  except KeyError:
+    # For categories not in the replacement map (e.g. cat12high/lowpurity),
+    # just use the original process and category
+    procReplacementFit = opt.proc
+    catReplacementFit  = opt.cat
+
   for mp in opt.massPoints.split(","):
     WSFileName = glob.glob("%s/output*M%s*%s.root"%(opt.inputWSDir,mp,procReplacementFit))[0]
     f = ROOT.TFile(WSFileName,"read")
