@@ -13,6 +13,17 @@ import time
 import logging
 import subprocess
 import sys
+import argparse
+import glob
+import shutil
+
+#Add argument to take mass_point at command line 
+
+
+parser = argparse.ArgumentParser(description='Process mass point.')
+parser.add_argument('--mass_point', type=str, required=True, help='Mass point in the format MXxxx_MYyyy')
+args = parser.parse_args()
+
 
 YEAR = "2017"
 # PYTHON = sys.executable
@@ -395,7 +406,7 @@ def run_makeDatacard(ws_sig_tag, output_card_name, log_file, process):
 
 if __name__ == "__main__":
 
-    mass_list = ["MX3000_MY2800"]
+    mass_list = [args.mass_point]  # e.g. ["MX3000_MY2800"]
     cat_list = ["cat12lowpurity", "cat12highpurity"]
     final_state_list = ["wwgg", "VBF", "VH", "TTH", "GGH"]
 
@@ -566,3 +577,18 @@ if __name__ == "__main__":
                     ),
                     process="ggyh" + final_state,
                 )
+
+        # ---- after all cats and final states for this mass are done ----
+        # Collect all datacards for this mass into a dedicated directory
+        dc_base = os.path.join(FGG_BASE, "Datacard")
+        mass_dc_dir = os.path.join(dc_base, f"datacard_{mass}")
+        os.makedirs(mass_dc_dir, exist_ok=True)
+
+        # Pattern for the datacards you just made for this mass & year
+        pattern = os.path.join(dc_base, f"Datacard_{mass}_{YEAR}_*.txt")
+
+        for src in glob.glob(pattern):
+            dst = os.path.join(mass_dc_dir, os.path.basename(src))
+            # use copy2 so timestamps etc. are preserved;
+            # use shutil.move if you want them removed from the top level
+            shutil.copy2(src, dst)
