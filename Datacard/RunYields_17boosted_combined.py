@@ -40,9 +40,9 @@ def get_options():
 (opt,args) = get_options()
 
 print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUNNING YIELDS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-def leave():
+def leave(code=0):
   print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUNNING YIELDS (END) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-  sys.exit(1)
+  sys.exit(code)
 
 # Store all opts in orderedDict for submissionTools
 options = od()

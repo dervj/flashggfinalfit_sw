@@ -21,7 +21,7 @@
 
 theory_systematics = [
                 # Normalisation uncertainties: enter interpretations
-                {'name':'BR_hgg','title':'BR_hgg','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':"0.98/1.021"},
+                {'name':'BR_hgg','title':'BR_hgg','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':"theory_uncertainties/br_hgg_singleH.json"},
                 # New scheme for ggH stage 1.2 
                 {'name':'BR_hZZ','title':'BR_hZZ','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':"theory_uncertainties/wwgg.json"},
                 {'name':'BR_htt','title':'BR_htt','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':"theory_uncertainties/wwgg.json"},

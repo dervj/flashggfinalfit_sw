@@ -7,10 +7,10 @@ signalScriptCfg = {
   
   # Setup
   'inputWSDir':'input_pathws_ggyh_ws_path',
-  'procs':'auto', # if auto: inferred automatically from filenames
-  'cats':'auto', # if auto: inferred automatically from (0) workspace
+  'procs':'ggyh',            # sed'd to e.g. ggyhwwgg; explicit so symlinked files aren't auto-detected
+  'cats':'cat_placeholder',  # sed'd to the actual category (cat12highpurity or cat12lowpurity)
   'ext':'%s_ws_path'%_year,
-  'analysis':'STXS', # To specify which replacement dataset mapping (defined in ./python/replacementMap.py)
+  'analysis':'YH', # To specify which replacement dataset mapping (defined in ./python/replacementMap.py)
   'year':'%s'%_year, # Use 'combined' if merging all years: not recommended
   'massPoints':'125',
 

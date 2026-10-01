@@ -12,6 +12,8 @@ backgroundScriptCfg = {
 
   # Job submission options
   'batch':'local', # [condor,SGE,IC,local]
-  'queue':'hep.q' # for condor e.g. microcentury
+  'queue':'hep.q', # for condor e.g. microcentury
+
+  # "fTestArgs": "--isData 1 --doBlind 1 --blind 115 135"
   
 }
