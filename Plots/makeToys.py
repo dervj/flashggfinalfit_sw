@@ -15,6 +15,7 @@ def get_options():
   parser.add_option("--POIs", dest="POIs", default="r", help="Parameters of interest in fit")
   parser.add_option("--batch", dest="batch", default="IC", help="Batch system [IC,condor]")
   parser.add_option("--queue", dest="queue", default="workday", help="Change condor queue")
+  parser.add_option("--condorLogDir", dest="condorLogDir", default="/afs/cern.ch/user/j/jodervan/diHiggs/combine_condor/makeSplusBplots", help="Base directory for condor logs/outs/errs")
   parser.add_option('--dryRun',dest='dryRun', default=False, action="store_true", help='Dry run')
   return parser.parse_args()
 (opt,args) = get_options()
@@ -80,6 +81,10 @@ if opt.batch == 'IC':
   else: print " --> [DRY-RUN] jobs have not been submitted"
 
 elif opt.batch == 'condor':
+  # Base directory for condor logs/outs/errs
+  log_base = opt.condorLogDir if opt.condorLogDir != '' else os.getcwd()
+  log_dir = "%s/SplusBModels%s/toys/jobs"%(log_base,opt.ext)
+  if not os.path.isdir(log_dir): os.system("mkdir -p %s"%log_dir)
 
   # Create submission file
   fsub = open("./SplusBModels%s/toys/jobs/sub_toys.sh"%opt.ext,'w')
@@ -114,9 +119,9 @@ elif opt.batch == 'condor':
   fcondor = open("./SplusBModels%s/toys/jobs/sub_toys.sub"%opt.ext,'w')
   fcondor.write("executable = sub_toys.sh\n")
   fcondor.write("arguments = $(ProcId)\n")
-  fcondor.write("output                = %s/src/flashggFinalFit/Plots/SplusBModels%s/toys/jobs/sub_toys.$(ClusterId).$(ProcId).out\n"%(os.environ['CMSSW_BASE'],opt.ext))
-  fcondor.write("error                 = %s/src/flashggFinalFit/Plots/SplusBModels%s/toys/jobs/sub_toys.$(ClusterId).$(ProcId).err\n"%(os.environ['CMSSW_BASE'],opt.ext))
-  fcondor.write("log                   = %s/src/flashggFinalFit/Plots/SplusBModels%s/toys/jobs/sub_toys.$(ClusterId).log\n\n"%(os.environ['CMSSW_BASE'],opt.ext))
+  fcondor.write("output                = %s/sub_toys.$(ClusterId).$(ProcId).out\n"%log_dir)
+  fcondor.write("error                 = %s/sub_toys.$(ClusterId).$(ProcId).err\n"%log_dir)
+  fcondor.write("log                   = %s/sub_toys.$(ClusterId).log\n\n"%log_dir)
   fcondor.write("on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n")
   fcondor.write("periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n\n")
   fcondor.write("+JobFlavour = \"%s\"\n"%opt.queue)

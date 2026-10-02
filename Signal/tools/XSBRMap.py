@@ -29,6 +29,14 @@ globalXSBRMap['example']['THW'] = {'mode':'tHW'}
 # ...
 
 # STXS analysis: add factor for bin composition
+# YH BSM analysis: all ggyh* processes override XS and BR to 1 inside
+# FinalModel (finalModel.py lines 141-156), so no per-process entries are
+# needed here. The map must exist so that the signalFit.py existence check
+# (line 86) passes.
+globalXSBRMap['YH'] = od()
+globalXSBRMap['YH']['decay'] = {'mode':'hgg'}
+
+# STXS analysis: add factor for bin composition
 globalXSBRMap['STXS'] = od()
 globalXSBRMap['STXS']['decay'] = {'mode':'hgg'}
 # ggH STXS stage 1.2 bins

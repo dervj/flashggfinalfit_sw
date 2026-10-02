@@ -330,11 +330,11 @@ void plot(RooRealVar *mass, RooAbsPdf *pdf, RooDataSet *data, string name,vector
   RooPlot *plot = mass->frame();
   mass->setRange("unblindReg_1",mgg_low,115);
   // mass->setRange("unblindReg_2",135,mgg_high);
-  mass->setRange("unblindReg_2",115,mgg_high);
+  mass->setRange("unblindReg_2",135,mgg_high);
   if (BLIND) {
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1,unblindReg_2"),Invisible());
   }
   else data->plotOn(plot,Binning(mgg_high-mgg_low));
 
@@ -367,12 +367,12 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   // change the text size for the bkg modeling legend
   leg->SetTextSize(0.03); 
   mass->setRange("unblindReg_1",mgg_low,115);
-  mass->setRange("unblindReg_2",115,mgg_high);
+  mass->setRange("unblindReg_2",135,mgg_high);
   // mass->setRange("unblindReg_2",135,mgg_high);
   if (BLIND) {
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1,unblindReg_2"),Invisible());
   }
   else data->plotOn(plot,Binning(mgg_high-mgg_low)); 
   TCanvas *canv = new TCanvas();
@@ -431,9 +431,9 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   //double bkgval = hbplottmp->GetBinContent(ipoint+1);
   plotdata->GetPoint(ipoint, xtmp,ytmp);
   double bkgval = nomBkgCurve->interpolate(xtmp);
-  // if (BLIND) {
-  //  if ((xtmp > 115 ) && ( xtmp < 135) ) continue;
-  // }
+  if (BLIND) {
+   if ((xtmp > 115 ) && ( xtmp < 135) ) continue;
+  }
   std::cout << "[INFO] plotdata->Integral() " <<  plotdata->Integral() << " ( bins " << npoints  << ") hbkgplots[i]->Integral() " << hbplottmp->Integral() << " (bins " << hbplottmp->GetNbinsX() << std::endl;
  double errhi = plotdata->GetErrorYhigh(ipoint);
  double errlow = plotdata->GetErrorYlow(ipoint);
@@ -486,11 +486,11 @@ void plot(RooRealVar *mass, map<string,RooAbsPdf*> pdfs, RooDataSet *data, strin
 
   mass->setRange("unblindReg_1",mgg_low,115);
   // mass->setRange("unblindReg_2",135,mgg_high);
-  mass->setRange("unblindReg_2",115,mgg_high);
+  mass->setRange("unblindReg_2",135,mgg_high);
   if (BLIND) {
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1,unblindReg_2"),Invisible());
   }
   else data->plotOn(plot,Binning(mgg_high-mgg_low));
 
@@ -839,6 +839,7 @@ int main(int argc, char* argv[]){
 				funcType!=functionClasses.end(); funcType++){
 
 			double thisNll=0.; double prevNll=0.; double chi2=0.; double prob=0.; 
+			const int maxOrder = 2;
 			int order=1; int prev_order=0; int cache_order=0;
 
 			RooAbsPdf *prev_pdf=NULL;
@@ -847,7 +848,8 @@ int main(int argc, char* argv[]){
 
 			int counter =0;
 			//	while (prob<0.05){
-			while (prob<0.05 && order < 7){ //FIXME
+			// while (prob<0.05 && order < 7){ //FIXME
+			while (prob<0.05 && order <= maxOrder){ //FIXME
 				RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_%d_%s",(cat+catOffset),ext.c_str()));
 				if (!bkgPdf){
 					// assume this order is not allowed
@@ -904,11 +906,11 @@ int main(int argc, char* argv[]){
 				std::cout << "[INFO] Determining Envelope Functions for Family " << *funcType << ", cat " << cat << std::endl;
 				std::cout << "[INFO] Upper end Threshold for highest order function " << upperEnvThreshold <<std::endl;
 
-				while (prob<upperEnvThreshold){
+				while (prob<upperEnvThreshold && order <= maxOrder){
 					RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("env_pdf_%d_%s",(cat+catOffset),ext.c_str()));
 					if (!bkgPdf ){
 						// assume this order is not allowed
-						if (order >6) { std::cout << " [WARNING] could not add ] " << std::endl; break ;}
+						if (order > maxOrder) { std::cout << " [WARNING] could not add ] " << std::endl; break ;}
 						order++;
 					}
 					else {

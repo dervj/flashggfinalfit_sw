@@ -1,7 +1,14 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+from __future__ import print_function
+
+import argparse
+import os
 import re
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 from matplotlib import rcParams
 rcParams['font.family'] = 'Arial Unicode MS'
 # Set the style of the plot
@@ -15,10 +22,18 @@ ax.axhline(y=1, color='black', linestyle='--', label=r'$\mu = 1$')
 
 # Define the x-values for the points
 # Define the labels for the points
+parser = argparse.ArgumentParser(description="Plot bias study mean pulls with +/-0.14 guides.")
+parser.add_argument("--log", default="Pull.log", help="Path to Pull.log")
+parser.add_argument("--out", default="bias_study_dot_plot.png", help="Output image path")
+args = parser.parse_args()
+
+if not os.path.isfile(args.log):
+    raise IOError("Pull log not found: %s" % args.log)
+
 mean_values = []
 function_labels = []
 
-with open('Pull.log', 'r') as file:
+with open(args.log, 'r') as file:
     lines = file.readlines()
 
 # define regular expression to match "Mean" number
@@ -39,6 +54,11 @@ for line in lines:
             function_labels.append(match.group().split('_')[1])
 print(mean_values)
 print(function_labels)
+# Keep arrays aligned in case some fits did not report a mean.
+if len(mean_values) != len(function_labels):
+    min_len = min(len(mean_values), len(function_labels))
+    mean_values = mean_values[:min_len]
+    function_labels = function_labels[:min_len]
 # Plot the points with different colors
 sns.scatterplot(x=mean_values, y=[1]*len(mean_values), hue=function_labels, marker='o', s=100, ax=ax)
 
@@ -50,7 +70,7 @@ ax.grid(axis='x', linestyle='--')
 
 # Set labels and title
 ax.set_xlabel(r'$\frac{\mu - \widetilde{\mu}}{\sigma_{\mu}}$')
-ax.set_ylabel(f'$\mu$')
+ax.set_ylabel(r'$\mu$')
 # ax.set_title('Plot with Seaborn')
 
 # Add legend
@@ -61,5 +81,4 @@ ax.set_yticks([1])
 ax.set_xticks(np.arange(-0.2, 0.3, 0.1))
 
 # Show the plot
-plt.savefig('./bias_study_dot_plot.png', dpi=300)
-plt.show()
+plt.savefig(args.out, dpi=300)

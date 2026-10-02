@@ -72,6 +72,7 @@ else:
       citr += 1
 
 # Load cat S/S+B weights
+catsWeights = {}
 if opt.loadCatWeights != '':
   with open( opt.loadCatWeights ) as jsonfile: catsWeights = json.load(jsonfile)
 
@@ -85,7 +86,7 @@ for cat,f in inputFiles.iteritems():
 
   # Define cat weight
 #Shaowei Fixed##############
-  if 'all' in opt.cats:
+  if opt.cats in ['all','wall'] and opt.loadCatWeights != '':
     allcats=catsWeights.keys()
     for c in allcats:
       if cat in c:

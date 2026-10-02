@@ -16,6 +16,8 @@ SEED=0
 INTLUMI=1
 ISDATA=0
 UNBLIND=0
+UNBLIND_FTEST=0
+BLIND_PLOTS=1
 BATCH=""
 QUEUE=""
 YEAR="2016"
@@ -40,7 +42,7 @@ echo "--seed) for pseudodata random number gen seed (default $SEED)"
 echo "--intLumi) specified in fb^-{1} (default $INTLUMI)) "
 echo "--year) dataset year (default $YEAR)) "
 echo "--isData) specified in fb^-{1} (default $DATA)) "
-echo "--unblind) specified in fb^-{1} (default $UNBLIND)) "
+echo "--unblind) unblind fTest + plots (default: blinded) "
 echo "--batch) which batch system to use (None (''),HTCONDOR,IC) (default '$BATCH')) "
 echo "--queue) queue to submit jobs to (specific to batch))"
 }
@@ -76,6 +78,8 @@ case $1 in
 --year) YEAR=$2; shift;;
 --isData) ISDATA=1;;
 --unblind) UNBLIND=1;;
+--unblindFTest) UNBLIND_FTEST=1;;
+--unblindPlots) BLIND_PLOTS=0;;
 --batch) BATCH=$2; shift;;
 --queue) QUEUE=$2; shift;;
 
@@ -149,14 +153,14 @@ echo "--------------------------------------"
 echo "Running Background F-Test"
 echo "-->Greate background model"
 echo "--------------------------------------"
-if [ $UNBLIND == 1 ]; then
+if [ $UNBLIND == 1 ] || [ $UNBLIND_FTEST == 1 ]; then
 OPT=" --unblind"
 fi
 if [ $ISDATA == 0 ]; then
 FILE=$OUTDIR/pseudoData/pseudoWS.root
 fi
 if [ $ISDATA == 1 ]; then
-OPT=" --isData 1"
+OPT="$OPT --isData 1"
 fi
 
 echo " ./bin/fTest -i $FILE --saveMultiPdf $OUTDIR/CMS-HGG_multipdf_$EXT_$CATS.root  -D $OUTDIR/bkgfTest$DATAEXT -f $CATS $OPT --year $YEAR --catOffset $CATOFFSET"
@@ -178,7 +182,11 @@ if [ "$SIGFILE" != "" ]; then
 SIG="-s $SIGFILE"
 fi
 if [ $UNBLIND == 1 ]; then
-OPT=" --unblind"
+  OPT=" --unblind"
+elif [ $BLIND_PLOTS == 1 ]; then
+  OPT=""
+else
+  OPT=" --unblind"
 fi
 echo "./scripts/subBkgPlots.py -b CMS-HGG_multipdf_$EXT.root -d $OUTDIR/bkgPlots$DATAEXT -S 13 --isMultiPdf --useBinnedData  --doBands --massStep 1 $SIG -L 100 -H 180 -f $CATS -l $CATS --intLumi $INTLUMI $OPT --batch $BATCH -q $QUEUE --year $YEAR"
 ./scripts/subBkgPlots.py -b CMS-HGG_multipdf_$EXT.root -d $OUTDIR/bkgPlots$DATAEXT -S 13 --isMultiPdf --useBinnedData  --doBands  --massStep 1 $SIG -L 100 -H 180 -f $CATS -l $CATS --intLumi $INTLUMI $OPT --batch $BATCH -q $QUEUE --year $YEAR

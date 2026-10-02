@@ -23,6 +23,37 @@ def leave():
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(0)
 
+def _create_hist_1d(pdf, name, xvar, nbins):
+  if not pdf:
+    raise RuntimeError("Null pdf when creating histogram: %s" % name)
+  if not xvar:
+    raise RuntimeError("Null xvar when creating histogram: %s" % name)
+
+  # Try PyROOT overloads in decreasing order of modernity/compatibility.
+  # Newer ROOT: createHistogram(name, xvar, RooCmdArg...)
+  try:
+    h = pdf.createHistogram(name, xvar, ROOT.RooFit.Binning(nbins))
+    h.SetDirectory(0)
+    return h
+  except TypeError:
+    pass
+
+  # Older ROOT: createHistogram(name, xvar, RooLinkedList&)
+  try:
+    cmdlist = ROOT.RooLinkedList()
+    cmdlist.Add(ROOT.RooFit.Binning(nbins))
+    h = pdf.createHistogram(name, xvar, cmdlist)
+    h.SetDirectory(0)
+    return h
+  except Exception:
+    pass
+
+  # Very old fallback: createHistogram(varNameList, xbins, ...)
+  h = pdf.createHistogram(xvar.GetName(), nbins)
+  h.SetName(name)
+  h.SetDirectory(0)
+  return h
+
 def get_options():
   parser = OptionParser()
   parser.add_option("--inputWSFile", dest="inputWSFile", default=None, help="Input RooWorkspace file. If loading snapshot then use a post-fit workspace where the option --saveWorkspace was set")
@@ -87,8 +118,12 @@ catinfo_data = pd.DataFrame(columns=_columns)
 for c in cats:
   print("category: %s"%c)
   sbpdf, bpdf = sb_model.getPdf(c), b_model.getPdf(c)
-  h_sbpdf_tmp = sbpdf.createHistogram("h_sb_tmp_pdfNBins_%s"%c,xvar,ROOT.RooFit.Binning(opt.pdfNBins))
-  h_bpdf_tmp = bpdf.createHistogram("h_b_tmp_pdfNBins_%s"%c,xvar,ROOT.RooFit.Binning(opt.pdfNBins))
+  if not sbpdf:
+    raise RuntimeError("Could not find S+B pdf for category '%s' (check --cats values match CMS_channel labels)" % c)
+  if not bpdf:
+    raise RuntimeError("Could not find B-only pdf for category '%s' (check --cats values match CMS_channel labels)" % c)
+  h_sbpdf_tmp = _create_hist_1d(sbpdf, "h_sb_tmp_pdfNBins_%s"%c, xvar, opt.pdfNBins)
+  h_bpdf_tmp = _create_hist_1d(bpdf, "h_b_tmp_pdfNBins_%s"%c, xvar, opt.pdfNBins)
   # Calculate yields
   SB, B = sbpdf.expectedEvents(xvar_argset), bpdf.expectedEvents(xvar_argset)
   S = SB-B 
@@ -129,4 +164,3 @@ if opt.saveCatInfo:
   if not os.path.isdir("./pkl"): os.system("mkdir ./pkl")
   with open("./pkl/catInfo%s.pkl"%opt.ext,"w") as fD: pickle.dump(catinfo_data,fD)
   
-

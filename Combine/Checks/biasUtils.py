@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 import os
+
+BASEDIR = "."
+
+def setBaseDir(path):
+    global BASEDIR
+    BASEDIR = path
 def rooArgSetToList(argset): ## taken from Andrea Marini's great repo here: https://github.com/amarini/rfwsutils/blob/master/wsutils.py#L300-L313
     """creates a python list with the contents of argset (which should be a RooArgSet)"""
     it = argset.createIterator()
@@ -27,21 +33,21 @@ def shortName(name):
     return name.split('_')[-1]
 
 def toyName(name, split=None):
-    retval = 'BiasToys/biasStudy_%s_toys.root'%name
+    retval = os.path.join(BASEDIR, 'BiasToys', 'biasStudy_%s_toys.root'%name)
     if split is not None: 
         split = int(split)
         retval = retval.replace(name,'%s_split%g'%(name,split))
     return retval
 
 def fitName(name, split=None):
-    retval = 'BiasFits/biasStudy_%s_fits.root'%name
+    retval = os.path.join(BASEDIR, 'BiasFits', 'biasStudy_%s_fits.root'%name)
     if split is not None: 
         split = int(split)
         retval = retval.replace(name,'%s_split%g'%(name,split))
     return retval
 
 def plotName(name):
-    return 'BiasPlots/biasStudy_%s_pulls'%name
+    return os.path.join(BASEDIR, 'BiasPlots', 'biasStudy_%s_pulls'%name)
 
 def run(cmd, dry=False):
    print cmd

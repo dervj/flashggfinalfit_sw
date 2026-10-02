@@ -83,6 +83,10 @@ parser.add_argument('--signal-processes', type=str, default="",
 parser.add_argument('--year', type=str, default='2017',
                     choices=['2016pre', '2016post', '2017', '2018'],
                     help='Data-taking year (default: 2017).')
+parser.add_argument('--photon-syst-opts', type=str, default="",
+                    help='Extra options passed to calcPhotonSyst via --modeOpts, '
+                         'e.g. "--thresholdSigma 0" to zero all photon sigma constants '
+                         '(diagnostic only). Empty means defaults.')
 args = parser.parse_args()
 
 # Per-year script/config lookup
@@ -245,6 +249,25 @@ def run_cmd(command, log_message=None, cwd=None):
         logging.warning("command returned nonzero status %s", ret)
     return ret
 
+def copy_verified(src, dst, log_message=None, tries=6, wait=10):
+    """cp src -> dst, retrying until dst size matches a stable, nonzero src size.
+
+    EOS FUSE can serve a just-closed file as empty, so a plain cp right after
+    the writer exits may silently produce a 0-byte copy.
+    """
+    for attempt in range(1, tries + 1):
+        size1 = os.path.getsize(src) if os.path.exists(src) else 0
+        time.sleep(wait)
+        size2 = os.path.getsize(src) if os.path.exists(src) else 0
+        if size1 > 0 and size1 == size2:
+            run_cmd("cp {s} {d}".format(s=src, d=dst), log_message=log_message)
+            if os.path.exists(dst) and os.path.getsize(dst) == size2:
+                return
+        logging.warning("copy attempt %d/%d not verified (src %d->%d bytes, dst %s)",
+                        attempt, tries, size1, size2,
+                        os.path.getsize(dst) if os.path.exists(dst) else "missing")
+    raise RuntimeError("could not produce verified copy of {0} -> {1}".format(src, dst))
+
 def safe_makedirs(path):
     """Create directory tree; ignore EEXIST races from concurrent jobs."""
     try:
@@ -347,8 +370,7 @@ def run_Tree2WS_sig(sig_path, input_file, log_file, ws_tag, output_sig_root, pro
         input_file.replace(".root", "") + "_" + process_prefix + ".root",
     )
     dst_file = os.path.join(ws_dir, output_sig_root)
-    cmd_cp = "cp {src} {dst}".format(src=src_file, dst=dst_file)
-    run_cmd(cmd_cp, log_message="copy signal ws to workspace")
+    copy_verified(src_file, dst_file, log_message="copy signal ws to workspace")
 
     logging.info("Trees2WS signal end: %s", time.time())
 
@@ -473,11 +495,14 @@ def run_ftest(ws_tag, log_file, sig_path, process, clean_output, cat):
         "python {script} "
         "--inputConfig {cfg} "
         "--mode calcPhotonSyst "
+        "{opts}"
         ">> {log} 2>&1"
     ).format(
         wd=workdir,
         script=runscript,
         cfg=cfg_name,
+        opts=("--modeOpts \"{0}\" ".format(args.photon_syst_opts)
+              if args.photon_syst_opts else ""),
         log=log_abs,
     )
     run_cmd(cmd_ph, log_message="run calcPhotonSyst")

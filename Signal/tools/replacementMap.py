@@ -206,3 +206,33 @@ globalReplacementMap["STXS"]["catRVMap"]["RECO_WH_LEP_PTV_75_150_Tag1"] = "RECO_
 globalReplacementMap["STXS"]["catRVMap"]["RECO_WH_LEP_PTV_GT150_Tag0"] = "RECO_WH_LEP_PTV_GT150_Tag0"
 globalReplacementMap["STXS"]["catRVMap"]["RECO_ZH_LEP_Tag0"] = "RECO_ZH_LEP_Tag0"
 globalReplacementMap["STXS"]["catRVMap"]["RECO_ZH_LEP_Tag1"] = "RECO_ZH_LEP_Tag1"
+
+
+# YH BSM (ggyhwwgg) analysis.
+# When cat12lowpurity falls below the replacement threshold, borrow the shape
+# from cat12highpurity (same process, same year).  The normalization is always
+# taken from the nominal (lowpurity) dataset - that is preserved by signalFit
+# in nominalDatasets before the replacement is triggered.
+#
+# The HP workspace file is made available to the LP signalFit glob by symlinking
+# it into the LP workspace directory under the suffix 'ggyhwwgg_hp.root'
+# (see create_yh_boosted_splitproc_limit17.py:_prepare_lp_replacement).
+# procToData("ggyhwwgg_hp".split("_")[0]) == procToData("ggyhwwgg") == "ggyhwwgg"
+# so the dataset lookup "ggyhwwgg_125_13TeV_cat12highpurity" resolves correctly
+# inside the HP workspace.
+#
+# signalFit is run with --useDCB for the LP category so that the fTest nGauss
+# JSON is never read (bypassing the need to bridge the HP JSON into the LP outdir).
+globalReplacementMap['YH'] = od()
+# WV scenario: skipVertexScenarioSplit=True by default in YH fits so these are
+# not exercised, but the keys must exist for safety.
+globalReplacementMap['YH']['procWV'] = 'ggyhwwgg'
+globalReplacementMap['YH']['catWV']  = 'cat12highpurity'
+# RV replacement map
+globalReplacementMap['YH']['procRVMap'] = od()
+globalReplacementMap['YH']['procRVMap']['cat12lowpurity'] = 'ggyhwwgg_hp'
+# cat12highpurity has no replacement entry: if it is also below threshold the
+# KeyError fallback in signalFit.py will re-use the nominal (which will then
+# fail the second threshold check and exit cleanly).
+globalReplacementMap['YH']['catRVMap'] = od()
+globalReplacementMap['YH']['catRVMap']['cat12lowpurity'] = 'cat12highpurity'

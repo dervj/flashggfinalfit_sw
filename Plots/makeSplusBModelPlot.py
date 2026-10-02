@@ -52,6 +52,7 @@ def get_options():
   parser.add_option("--translatePOIs", dest="translatePOIs", default=None, help="JSON to store poi translations")
   parser.add_option("--problematicCats", dest="problematicCats", default='', help='Problematic analysis categories to skip when processing all')
   parser.add_option("--doHHMjjFix", dest="doHHMjjFix", default=False, action="store_true", help="Do fix for HH analysis where some cats have different Mjj var")
+  parser.add_option("--ymaxFactor", dest="ymaxFactor", default=1.0, type='float', help="Multiply the auto y-maximum by this factor")
   return parser.parse_args()
 (opt,args) = get_options()
 

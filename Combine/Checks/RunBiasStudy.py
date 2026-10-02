@@ -19,6 +19,7 @@ parser.add_option("--poi",default="r")
 parser.add_option("--split",default=500,type="int")
 parser.add_option("--selectFunction",default=None)
 parser.add_option("--gaussianFit",action="store_true", default=False)
+parser.add_option("--outdir",default=".",help="Base output directory for Bias* subfolders")
 (opts,args) = parser.parse_args()
 print
 if opts.nToys>opts.split and not opts.nToys%opts.split==0: raise RuntimeError('The number of toys %g needs to be smaller than or divisible by the split number %g'%(opts.nToys, opts.split))
@@ -26,6 +27,11 @@ if opts.nToys>opts.split and not opts.nToys%opts.split==0: raise RuntimeError('T
 import ROOT as r
 r.gROOT.SetBatch(True)
 r.gStyle.SetOptStat(2211)
+abs_outdir = path.abspath(opts.outdir)
+if not path.isdir(abs_outdir):
+    system('mkdir -p %s'%abs_outdir)
+opts.outdir = abs_outdir
+setBaseDir(opts.outdir)
 
 ws = r.TFile(opts.datacard).Get(opts.workspace)
 
@@ -55,8 +61,10 @@ for ipdf in range(multipdf.getNumPdfs()):
 print 'Will run bias study for %d pdfs'%len(indexNameMap)
 print 'indexNameMap:', indexNameMap
 # indexNameMap  OrderedDict([(0, 'env_pdf_0_2017_13TeV_bern2'), (1, 'env_pdf_0_2017_13TeV_lau2')])
+def run_in_outdir(cmd):
+    run('cd %s && %s'%(opts.outdir, cmd), dry=opts.dryRun)
 if opts.toys:
-    if not path.isdir('BiasToysn'): system('mkdir -p BiasToys')
+    if not path.isdir(path.join(opts.outdir, 'BiasToys')): system('mkdir -p %s'%path.join(opts.outdir, 'BiasToys'))
     toyCmdBase = 'combine -m %.4f -d %s -M GenerateOnly --expectSignal %.4f -s %g --saveToys %s'%(opts.mH, opts.datacard, opts.expectSignal, opts.seed, opts.combineOptions)
     for ipdf,pdfName in indexNameMap.iteritems():
         name = shortName(pdfName)
@@ -66,19 +74,18 @@ if opts.toys:
                 # print("debug ipdf", ipdf)
                 # print("debug isplit", isplit)
                 # print("debug toyName(name,split=isplit)", toyName(name,split=isplit))
-                print('mv -f higgsCombine_%s* %s'%(name, toyName(name,split=isplit)))
                 toyCmd = toyCmdBase + ' -t %g -n _%s_split%g --setParameters %s=%g --freezeParameters %s'%(opts.split, name, isplit, indexName, ipdf, indexName)
-                run(toyCmd, dry=opts.dryRun)
+                run_in_outdir(toyCmd)
                 print("toy command is: ",toyCmd)
-                system('mv -f higgsCombine_%s* %s'%(name, toyName(name,split=isplit)))
+                system('mv -f %s %s'%(path.join(opts.outdir, 'higgsCombine_%s*'%name), toyName(name,split=isplit)))
         else: 
             toyCmd = toyCmdBase + ' -t %g -n _%s --setParameters %s=%g --freezeParameters %s'%(opts.nToys, name, indexName, ipdf, indexName)
-            run(toyCmd, dry=opts.dryRun)
+            run_in_outdir(toyCmd)
             print("toy command is: ",toyCmd)
-            system('mv -f higgsCombine_%s* %s'%(name, toyName(name)))
+            system('mv -f %s %s'%(path.join(opts.outdir, 'higgsCombine_%s*'%name), toyName(name)))
 
 if opts.fits:
-    if not path.isdir('BiasFits'): system('mkdir -p BiasFits')
+    if not path.isdir(path.join(opts.outdir, 'BiasFits')): system('mkdir -p %s'%path.join(opts.outdir, 'BiasFits'))
     fitCmdBase = 'combine --rMin -10 --rMax 10 -m %.4f -d %s -M MultiDimFit -P %s --algo singles %s'%(opts.mH, opts.datacard, opts.poi, opts.combineOptions)
     for ipdf,pdfName in indexNameMap.iteritems():
         name = shortName(pdfName)
@@ -91,23 +98,25 @@ if opts.fits:
             print("debug fitName: %s"%fitName(name))
             for isplit in range(opts.nToys//opts.split):
                 fitCmd = fitCmdBase + ' -t %g -n _%s_split%g --toysFile=%s'%(opts.split, name, isplit, toyName(name,split=isplit))
-                run(fitCmd, dry=opts.dryRun)
+                run_in_outdir(fitCmd)
                 print("fit command: %s"%fitCmd)
-                system('mv -f higgsCombine_%s* %s'%(name, fitName(name,split=isplit)))
-            run('hadd %s BiasFits/*%s*split*.root'%(fitName(name),name), dry=opts.dryRun)
+                system('mv -f %s %s'%(path.join(opts.outdir, 'higgsCombine_%s*'%name), fitName(name,split=isplit)))
+            run('hadd -f %s %s'%(fitName(name), path.join(opts.outdir, 'BiasFits', '*%s*split*.root'%name)), dry=opts.dryRun)
         else:
             fitCmd = fitCmdBase + ' -t %g -n _%s --toysFile=%s'%(opts.nToys, name, toyName(name))
-            run(fitCmd, dry=opts.dryRun)
+            run_in_outdir(fitCmd)
             print("fit command: %s"%fitCmd)
-            system('mv -f higgsCombine_%s* %s'%(name, fitName(name)))
+            system('mv -f %s %s'%(path.join(opts.outdir, 'higgsCombine_%s*'%name), fitName(name)))
 
 if opts.plots:
-    if not path.isdir('BiasPlots'): system('mkdir -p BiasPlots')
+    if not path.isdir(path.join(opts.outdir, 'BiasPlots')): system('mkdir -p %s'%path.join(opts.outdir, 'BiasPlots'))
     for ipdf,pdfName in indexNameMap.iteritems():
         name = shortName(pdfName)
         tfile = r.TFile(fitName(name))
         print("debug tfile: %s"%tfile)
         tree = tfile.Get('limit')
+        if not tree or not tree.InheritsFrom('TTree'):
+            raise RuntimeError('Missing limit tree in %s (fit outputs likely failed or hadd did not merge).'%fitName(name))
         pullHist = r.TH1F('pullsForTruth_%s'%name, 'Pull distribution using the envelope to fit %s'%name, 80, -4., 4.)
         pullHist.GetXaxis().SetTitle('Pull')
         pullHist.GetYaxis().SetTitle('Entries')
@@ -140,5 +149,7 @@ if opts.plots:
         if opts.gaussianFit:
            r.gStyle.SetOptFit(111)
            pullHist.Fit('gaus')
+        print 'Saving %s.pdf'%plotName(name)
         canv.SaveAs('%s.pdf'%plotName(name))
+        print 'Saving %s.png'%plotName(name)
         canv.SaveAs('%s.png'%plotName(name))

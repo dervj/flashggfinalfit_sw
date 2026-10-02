@@ -110,8 +110,17 @@ def makeSplusBPlot(workspace,hD,hSB,hB,hS,hDr,hBr,hSr,cat,options,dB=None,reduce
   pad1.cd()
   h_axes = hD.Clone()
   h_axes.Reset()
-  if options.doBands: h_axes.SetMaximum((hD.GetMaximum()+hD.GetBinError(hD.GetMaximumBin()))*1.4)
-  else: h_axes.SetMaximum((hD.GetMaximum()+hD.GetBinError(hD.GetMaximumBin()))*1.3)
+  ymax = (hD.GetMaximum() + hD.GetBinError(hD.GetMaximumBin()))
+  if options.doBands:
+    ymax *= 1.4
+  else:
+    ymax *= 1.3
+  if hasattr(options, "ymaxFactor"):
+    try:
+      ymax *= float(options.ymaxFactor)
+    except Exception:
+      pass
+  h_axes.SetMaximum(ymax)
   h_axes.SetMinimum(0.)
   h_axes.SetTitle("")
   h_axes.GetXaxis().SetTitle("")
@@ -203,7 +212,7 @@ def makeSplusBPlot(workspace,hD,hSB,hB,hS,hDr,hBr,hSr,cat,options,dB=None,reduce
   lat0.SetTextSize(0.06)
   #lat0.DrawLatex(0.12,0.92,"#bf{CMS} #it{Preliminary}")
   #lat0.DrawLatex(0.12,0.92,"#bf{CMS}")
-  lat0.DrawLatex(0.6,0.92,"137 fb^{-1} (13 TeV)")
+  lat0.DrawLatex(0.6,0.92,"138 fb^{-1} (13 TeV)")
   lat0.DrawLatex(0.6,0.8,"#scale[0.6]{%s}"%Translate(cat,translateCats))
   #lat0.DrawLatex(0.15,0.83,"#scale[0.75]{H#rightarrow#gamma#gamma}")
   lat0.DrawLatex(0.15,0.83,"#scale[0.75]{H #rightarrow #gamma#gamma, m_{H} = 125.38 GeV}")

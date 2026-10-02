@@ -297,7 +297,7 @@ class SimultaneousFit:
             self.Vars['%s_p%g'%(k,po)] = ROOT.RooRealVar("%s_p%g"%(k,po),"%s_p%g"%(k,po), -0.1*(1.+g), -0.75*(1.0+g), 0.75*(1.0+g))  
 
 	  elif(f == "sigma")&(po==0):
-            self.Vars['%s_p%g'%(k,po)] = ROOT.RooRealVar("%s_p%g"%(k,po),"%s_p%g"%(k,po),0.8*(1.+0.5*g), 0.25*(1.+0.5*g), 4.*(1.+0.5*g))
+            self.Vars['%s_p%g'%(k,po)] = ROOT.RooRealVar("%s_p%g"%(k,po),"%s_p%g"%(k,po),0.8*(1.+0.5*g), 0.25*(1.+0.5*g), 8.*(1.+0.5*g))
 
 	  self.Varlists[k].add( self.Vars['%s_p%g'%(k,po)] ) 
 	# Define polynominal
@@ -348,7 +348,11 @@ class SimultaneousFit:
     # Run fit
     if self.verbose: print " --> (%s) Running fit"%self.name
     self.FitResult = minimize(nChi2Addition,x0,args=self,bounds=xbounds,method=self.minimizerMethod)
+    if self.verbose:
+      print " --> (%s) Fit status: success=%s status=%s nfev=%s message=%s"%(self.name,str(self.FitResult.success),str(self.FitResult.status),str(self.FitResult.nfev),str(self.FitResult.message))
     self.Chi2 = self.getChi2()
+    if self.verbose:
+      print " --> (%s) Fit chi2/ndof: chi2=%.6f ndof=%g chi2/ndof=%.3f"%(self.name,self.Chi2,int(self.Ndof),self.Chi2/int(self.Ndof))
     #self.Chi2 = nChi2Addition(self.FitResult['x'],self)
     # Print parameter post-fit values
     if self.verbose: self.printFitParameters(title="Post-fit")
@@ -404,4 +408,3 @@ class SimultaneousFit:
     return self.Chi2/int(self.Ndof)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-

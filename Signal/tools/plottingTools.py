@@ -1,6 +1,7 @@
 # Functions for plotting 
 import ROOT
 import json
+import os
 from collections import OrderedDict as od
 from commonObjects import *
 
@@ -587,7 +588,7 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
 
   if _opt.cats == 'all': catStr, catExt = "All categories", "all"
   elif _opt.cats == 'wall': catStr, catExt = "#splitline{All categories}{S/(S+B) weighted}", "wall"
-  elif len(_opt.cats.split(","))>1: procStr, procExt = "Multiple categories", "multipleCats"
+  elif len(_opt.cats.split(","))>1: catStr, catExt = "Multiple categories", "multipleCats"
   else: catStr, catExt = Translate(_opt.cats,translateCats), _opt.cats
   if "cat34FHhighpurity" in _opt.cats: catStr = "cat0"
   if "cat34FHlowpurity" in _opt.cats: catStr = "cat1"
@@ -595,6 +596,17 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
   if "cat34SLlowpurity" in _opt.cats: catStr = "cat3"
   if "cat12highpurity" in _opt.cats: catStr = "cat4"
   if "cat12lowpurity" in _opt.cats: catStr = "cat5"
+  if _opt.cats == 'wall' and _opt.loadCatWeights != "": catStr = "#splitline{All categories}{S/(S+B) weighted}"
+  elif _opt.loadCatWeights != "":
+    catStr = "#splitline{%s}{S/(S+B) weighted}" % catStr
+  # In hp-only mode, drop the category label and keep only the weighting text.
+  hp_only = False
+  if os.environ.get("HP_ONLY") == "1":
+    hp_only = True
+  elif hasattr(_opt, "ext") and _opt.ext and "hponly" in _opt.ext:
+    hp_only = True
+  if hp_only and _opt.loadCatWeights != "":
+    catStr = "S/(S+B) weighted"
   lat1.DrawLatex(0.85,0.86,"%s"%catStr)
   lat1.DrawLatex(0.83,0.8,"%s %s"%(procStr,yearStr))
 

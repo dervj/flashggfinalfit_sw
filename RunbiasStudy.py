@@ -7,15 +7,18 @@
 
 # python /afs/cern.ch/user/s/shsong/CMSSW_10_6_20/src/flashggFinalFit/RunbiasStudy.py -d /afs/cern.ch/user/s/shsong/CMSSW_10_6_20/src/flashggFinalFit/Datacard/combine_run2/condor_input/Datacard_M1000_run2allcat.root -f -c "--cminDefaultMinimizerStrategy 0 --X-rtd MINIMIZER_freezeDisassociatedParams --X-rtd MINIMIZER_multiMin_hideConstants --X-rtd MINIMIZER_multiMin_maskConstraints   --rMin -5 --rMax 5  --freezeParameters MH"
 # python /afs/cern.ch/user/s/shsong/CMSSW_10_6_20/src/flashggFinalFit/RunbiasStudy.py -d /afs/cern.ch/user/s/shsong/CMSSW_10_6_20/src/flashggFinalFit/Datacard/combine_run2/condor_input/Datacard_M1000_run2allcat.root -p --gaussianFit
+import sys
+sys.path.append('/eos/user/j/jodervan/Analysis/flashggfinalfit_sw/CMSSW_10_6_20/src/flashggFinalFit/Combine/Checks/')
 
 
 from biasUtils import *
-import matplotlib
 from array import array
 from os import *
-import matplotlib.pyplot as plt
+import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from optparse import OptionParser
+
 parser = OptionParser()
 parser.add_option("-d","--datacard",default="Datacard.root")
 parser.add_option("-w","--workspace",default="w")
@@ -83,6 +86,7 @@ if opts.toys:
                 system('mv higgsCombine_%s* %s'%(name, toyName(name,split=isplit)))
         else: 
             toyCmd = toyCmdBase + ' -t %g -n _%s --setParameters %s=%g --freezeParameters %s'%(opts.nToys, name, indexName, ipdf, indexName)
+            print("Will save toys as:", toyName(name))
             run(toyCmd, dry=opts.dryRun)
             system('mv higgsCombine_%s* %s'%(name, toyName(name)))
 print
@@ -100,6 +104,7 @@ if opts.fits:
             run('hadd %s BiasFits/*%s*split*.root'%(fitName(name),name), dry=opts.dryRun)
         else:
             fitCmd = fitCmdBase + ' -t %g -n _%s --toysFile=%s'%(opts.nToys, name, toyName(name))
+            print("Will fit toys from:", toyName(name))
             run(fitCmd, dry=opts.dryRun)
             system('mv higgsCombine_%s* %s'%(name, fitName(name)))
 

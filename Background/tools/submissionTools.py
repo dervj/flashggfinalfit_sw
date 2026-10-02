@@ -60,6 +60,7 @@ def writeSubFiles(_opts):
         co = _opts['catOffset']+cidx
         _f.write("if [ $1 -eq %g ]; then\n"%cidx)
         _cmd = "%s/runBackgroundScripts.sh -i %s -p %s -f %s --ext %s --catOffset %g --intLumi %s --year %s --batch %s --queue %s --sigFile %s --isData --fTest"%(bwd__,_opts['dataFile'],_opts['procs'],c,_opts['ext'],co,_opts['lumi'],_opts['year'],_opts['batch'],_opts['queue'],_opts['signalFitWSFile'])
+        if _opts.get('unblind', False): _cmd += " --unblind"
         _f.write("  %s\n"%_cmd)
         _f.write("fi\n")
       
@@ -86,6 +87,7 @@ def writeSubFiles(_opts):
         _f = open("%s/%s_%s.sh"%(_jobdir,_executable,c),"w")
         writePreamble(_f)
         _cmd = "%s/runBackgroundScripts.sh -i %s -p %s -f %s --ext %s --catOffset %g --intLumi %s --year %s --batch %s --queue %s --sigFile %s --isData --fTest"%(bwd__,_opts['dataFile'],_opts['procs'],c,_opts['ext'],co,_opts['lumi'],_opts['year'],_opts['batch'],_opts['queue'],_opts['signalFitWSFile'])
+        if _opts.get('unblind', False): _cmd += " --unblind"
         _f.write("%s\n"%_cmd)
         _f.close()
         os.system("chmod 775 %s/%s_%s.sh"%(_jobdir,_executable,c))
